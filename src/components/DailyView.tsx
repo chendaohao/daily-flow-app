@@ -10,8 +10,7 @@ import type { TimerMode } from "../hooks/useTimer";
 
 export function DailyView() {
   const today = getToday();
-  const dayOfWeek = new Date().getDay();
-  const theme = getDayTheme(dayOfWeek);
+  const theme = getDayTheme(new Date().getDay());
 
   const [selectedFrogId, setSelectedFrogId] = useState<number | null>(null);
   const [showReview, setShowReview] = useState(false);

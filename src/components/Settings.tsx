@@ -14,8 +14,8 @@ export function Settings() {
       const b = await api.getSetting("break_minutes");
       const k = await api.getSetting("claude_api_key");
       const m = await api.getSetting("claude_model");
-      if (p) setPomodoroMin(p);
-      if (b) setBreakMin(b);
+      if (p && !isNaN(Number(p)) && Number(p) > 0) setPomodoroMin(p);
+      if (b && !isNaN(Number(b)) && Number(b) > 0) setBreakMin(b);
       if (k) setApiKey(k);
       if (m) setModel(m);
     })();

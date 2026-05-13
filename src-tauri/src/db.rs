@@ -136,19 +136,19 @@ impl DbState {
         let mut values: Vec<Box<dyn rusqlite::types::ToSql>> = vec![];
 
         if let Some(t) = title {
-            sets.push(format!("title = ?{}", sets.len() + 1));
+            sets.push(format!("title = ?{}", values.len() + 1));
             values.push(Box::new(t.to_string()));
         }
         if let Some(s) = status {
-            sets.push(format!("status = ?{}", sets.len() + 1));
+            sets.push(format!("status = ?{}", values.len() + 1));
             values.push(Box::new(s.to_string()));
         }
         if let Some(p) = pomodoros {
-            sets.push(format!("pomodoros = ?{}", sets.len() + 1));
+            sets.push(format!("pomodoros = ?{}", values.len() + 1));
             values.push(Box::new(p));
         }
         if let Some(e) = estimated_pomodoros {
-            sets.push(format!("estimated_pomodoros = ?{}", sets.len() + 1));
+            sets.push(format!("estimated_pomodoros = ?{}", values.len() + 1));
             values.push(Box::new(e));
         }
 
@@ -267,9 +267,16 @@ impl DbState {
              ON CONFLICT(date) DO UPDATE SET gains=?2, blockers=?3, tomorrow_plan=?4",
             params![date, gains, blockers, tomorrow_plan],
         )
-        .unwrap();
-        drop(conn);
-        self.get_review(date).unwrap()
+        .expect("Failed to save review");
+        let id = conn.last_insert_rowid();
+        Review {
+            id,
+            date: date.to_string(),
+            gains: Some(gains.to_string()),
+            blockers: Some(blockers.to_string()),
+            tomorrow_plan: Some(tomorrow_plan.to_string()),
+            created_at: chrono::Local::now().format("%Y-%m-%d %H:%M:%S").to_string(),
+        }
     }
 
     // ── Settings ──

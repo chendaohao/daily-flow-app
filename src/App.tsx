@@ -8,7 +8,9 @@ type Tab = "daily" | "summary" | "settings";
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("daily");
-  const [selectedDay, setSelectedDay] = useState(new Date().getDay());
+  const today = new Date().getDay();
+  const defaultDay = today === 0 || today === 6 ? 1 : today;
+  const [selectedDay, setSelectedDay] = useState(defaultDay);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">

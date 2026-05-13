@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS pomodoros (
     date TEXT NOT NULL,
     started_at TEXT NOT NULL,
     duration_minutes INTEGER NOT NULL DEFAULT 50,
-    completed INTEGER NOT NULL DEFAULT 1
+    completed INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_pomodoros_date ON pomodoros(date);

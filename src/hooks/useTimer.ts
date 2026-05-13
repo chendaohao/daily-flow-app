@@ -77,22 +77,29 @@ export function useTimer(
       setSecondsLeft((prev) => {
         if (prev <= 1) {
           clearTimer();
-          setIsRunning(false);
-          onPhaseEndRef.current?.(mode);
-          if (mode === "focus") {
-            setMode("break");
-            return breakMinutes * 60;
-          } else {
-            setMode("idle");
-            return focusMinutes * 60;
-          }
+          return 0;
         }
         return prev - 1;
       });
     }, 1000);
 
     return clearTimer;
-  }, [isRunning, mode, clearTimer, focusMinutes, breakMinutes]);
+  }, [isRunning, clearTimer]);
+
+  useEffect(() => {
+    if (!isRunning || secondsLeft > 0) return;
+
+    setIsRunning(false);
+    onPhaseEndRef.current?.(mode);
+
+    if (mode === "focus") {
+      setMode("break");
+      setSecondsLeft(breakMinutes * 60);
+    } else {
+      setMode("idle");
+      setSecondsLeft(focusMinutes * 60);
+    }
+  }, [secondsLeft, isRunning, mode, focusMinutes, breakMinutes]);
 
   return { mode, secondsLeft, isRunning, start, pause, resume, skip, reset };
 }
