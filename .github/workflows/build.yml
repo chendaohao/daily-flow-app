@@ -47,9 +47,10 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Path artifacts -Force
-          Copy-Item -Path "src-tauri\target\release\bundle\msi\*.msi" -Destination artifacts\ -ErrorAction SilentlyContinue
-          Copy-Item -Path "src-tauri\target\release\bundle\nsis\*-setup.exe" -Destination artifacts\ -ErrorAction SilentlyContinue
-          Get-ChildItem artifacts
+          Get-ChildItem -Path "src-tauri\target\release\bundle\msi" -Filter "*.msi" | Copy-Item -Destination artifacts\
+          Get-ChildItem -Path "src-tauri\target\release\bundle\nsis" -Filter "*-setup.exe" | Copy-Item -Destination artifacts\
+          Write-Host "=== Artifacts ==="
+          Get-ChildItem -Path artifacts | Format-Table Name, Length
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
