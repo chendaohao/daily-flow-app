@@ -2,7 +2,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useTauriQuery } from "../hooks/useTauriQuery";
 import * as api from "../lib/tauri";
 import { getToday, getDayTheme } from "../lib/types";
-import type { Frog, PomodoroStats, Review } from "../lib/types";
+import type { Frog, PomodoroStats } from "../lib/types";
 import { FrogCard } from "./FrogCard";
 import { PomodoroTimer } from "./PomodoroTimer";
 import { ReviewPanel } from "./ReviewPanel";
