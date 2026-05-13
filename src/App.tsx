@@ -30,7 +30,7 @@ export default function App() {
 
         {/* Tab content */}
         <main>
-          {tab === "daily" && <DailyView />}
+          {tab === "daily" && <DailyView selectedDay={selectedDay} />}
           {tab === "summary" && <SummaryView />}
           {tab === "settings" && <Settings />}
         </main>

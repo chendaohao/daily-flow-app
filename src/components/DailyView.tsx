@@ -1,16 +1,26 @@
 import { useState, useCallback, useEffect } from "react";
 import { useTauriQuery } from "../hooks/useTauriQuery";
 import * as api from "../lib/tauri";
-import { getToday, getDayTheme } from "../lib/types";
+import { getToday, getDayTheme, getDateForDayOfWeek } from "../lib/types";
 import type { Frog, PomodoroStats } from "../lib/types";
 import { FrogCard } from "./FrogCard";
 import { PomodoroTimer } from "./PomodoroTimer";
 import { ReviewPanel } from "./ReviewPanel";
 import type { TimerMode } from "../hooks/useTimer";
 
-export function DailyView() {
+interface DailyViewProps {
+  selectedDay: number;
+}
+
+const DAY_LABELS: Record<number, string> = {
+  1: "周一", 2: "周二", 3: "周三", 4: "周四", 5: "周五",
+};
+
+export function DailyView({ selectedDay }: DailyViewProps) {
+  const date = getDateForDayOfWeek(selectedDay);
   const today = getToday();
-  const theme = getDayTheme(new Date().getDay());
+  const isToday = date === today;
+  const theme = getDayTheme(selectedDay);
 
   const [selectedFrogId, setSelectedFrogId] = useState<number | null>(null);
   const [showReview, setShowReview] = useState(false);
@@ -32,22 +42,23 @@ export function DailyView() {
   const {
     data: frogs,
     refetch: refetchFrogs,
-  } = useTauriQuery(() => api.getFrogs(today), [today]);
+  } = useTauriQuery(() => api.getFrogs(date), [date]);
 
   // Fetch pomodoro stats
   const { data: stats, refetch: refetchStats } = useTauriQuery(
-    () => api.getPomodoroStats(today),
-    [today]
+    () => api.getPomodoroStats(date),
+    [date]
   );
 
   // Fetch review
   const { data: review, refetch: refetchReview } = useTauriQuery(
-    () => api.getReview(today),
-    [today]
+    () => api.getReview(date),
+    [date]
   );
 
-  // Notifications for time blocks
+  // Notifications for time blocks (only on today)
   useEffect(() => {
+    if (!isToday) return;
     const checkTime = () => {
       const now = new Date();
       const h = now.getHours();
@@ -59,12 +70,12 @@ export function DailyView() {
     };
     const interval = setInterval(checkTime, 60000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isToday]);
 
   const handleAddFrog = async () => {
     const existing = frogs ?? [];
     if (existing.length >= 3) return;
-    await api.createFrog(today, existing.length + 1, "新任务");
+    await api.createFrog(date, existing.length + 1, "新任务");
     refetchFrogs();
   };
 
@@ -99,7 +110,7 @@ export function DailyView() {
 
   const handleStartPomodoro = async () => {
     if (!selectedFrogId) return;
-    const record = await api.startPomodoro(selectedFrogId, today);
+    const record = await api.startPomodoro(selectedFrogId, date);
     setCurrentPomodoroId(record.id);
   };
 
@@ -108,7 +119,7 @@ export function DailyView() {
     blockers: string,
     tomorrowPlan: string
   ) => {
-    await api.saveReview(today, gains, blockers, tomorrowPlan);
+    await api.saveReview(date, gains, blockers, tomorrowPlan);
     refetchReview();
   };
 
@@ -117,12 +128,24 @@ export function DailyView() {
 
   return (
     <div className="space-y-6">
-      {/* Header info */}
-      {theme && (
-        <div className="text-center text-sm text-slate-500">
-          {today} · {pomodoroStats.completed} 个番茄钟 · {pomodoroStats.total_minutes} 分钟
+      {/* Daily overview header */}
+      <div className="text-center">
+        {theme && (
+          <div className="mb-1">
+            <span className="text-3xl">{theme.emoji}</span>
+          </div>
+        )}
+        <div className="text-lg font-bold text-slate-800">
+          {DAY_LABELS[selectedDay] ?? ""} · {theme?.label ?? ""}
         </div>
-      )}
+        <div className="text-sm text-slate-500 mt-1">
+          {date}
+          {isToday && <span className="ml-2 px-2 py-0.5 bg-blue-100 text-blue-600 rounded-full text-xs">今天</span>}
+        </div>
+        <div className="text-xs text-slate-400 mt-1">
+          {pomodoroStats.completed} 个番茄钟 · {pomodoroStats.total_minutes} 分钟
+        </div>
+      </div>
 
       {/* Frogs */}
       <div>

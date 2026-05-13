@@ -61,7 +61,7 @@ export function FrogCard({ frog, isActive, onSelect, onUpdate, onDelete }: FrogC
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 onBlur={commitTitle}
-                onKeyDown={(e) => e.key === "Enter" && commitTitle()}
+                onKeyDown={(e) => { if (e.key === "Enter") commitTitle(); if (e.key === "Escape") { setTitle(frog.title); setEditing(false); } }}
                 onClick={(e) => e.stopPropagation()}
                 className="flex-1 text-sm font-medium bg-white border border-slate-300 rounded px-2 py-1 focus:outline-none focus:border-blue-400"
                 autoFocus
@@ -85,13 +85,22 @@ export function FrogCard({ frog, isActive, onSelect, onUpdate, onDelete }: FrogC
           </div>
         </div>
 
-        <button
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
-          className="text-slate-400 hover:text-red-500 transition-colors text-xs ml-2"
-          title="删除"
-        >
-          ×
-        </button>
+        <div className="flex items-center gap-1 ml-2">
+          <button
+            onClick={(e) => { e.stopPropagation(); setEditing(true); }}
+            className="text-slate-400 hover:text-blue-500 transition-colors text-xs px-1"
+            title="编辑标题"
+          >
+            ✏️
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); onDelete(); }}
+            className="text-slate-400 hover:text-red-500 transition-colors text-xs px-1"
+            title="删除"
+          >
+            ×
+          </button>
+        </div>
       </div>
 
       {/* Progress bar */}

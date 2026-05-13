@@ -11,7 +11,14 @@ export const createFrog = (date: string, position: number, title: string) =>
 export const updateFrog = (
   id: number,
   opts: { title?: string; status?: string; pomodoros?: number; estimated_pomodoros?: number }
-) => invoke<Frog>("update_frog", { id, ...opts });
+) => {
+  const params: Record<string, unknown> = { id };
+  if (opts.title !== undefined) params.title = opts.title;
+  if (opts.status !== undefined) params.status = opts.status;
+  if (opts.pomodoros !== undefined) params.pomodoros = opts.pomodoros;
+  if (opts.estimated_pomodoros !== undefined) params.estimated_pomodoros = opts.estimated_pomodoros;
+  return invoke<Frog>("update_frog", params);
+};
 
 export const deleteFrog = (id: number) =>
   invoke<void>("delete_frog", { id });

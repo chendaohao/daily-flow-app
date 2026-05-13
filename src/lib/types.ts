@@ -50,7 +50,20 @@ export const WEEK_THEMES: Record<number, WeekTheme> = {
 
 export function getToday(): string {
   const d = new Date();
+  return formatDate(d);
+}
+
+function formatDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+export function getDateForDayOfWeek(dayOfWeek: number): string {
+  const now = new Date();
+  const currentDay = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (currentDay === 0 ? 6 : currentDay - 1));
+  monday.setDate(monday.getDate() + (dayOfWeek - 1));
+  return formatDate(monday);
 }
 
 export function getDayTheme(dayOfWeek: number): WeekTheme | null {
