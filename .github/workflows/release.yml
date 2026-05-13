@@ -42,11 +42,17 @@ jobs:
       - name: Build Tauri app
         run: pnpm tauri build
 
+      - name: Collect artifacts
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist
+          Copy-Item src-tauri/target/release/daily-flow-app.exe dist/
+          Get-ChildItem src-tauri/target/release/bundle/msi -Filter "*.msi" | Copy-Item -Destination dist/
+          Get-ChildItem src-tauri/target/release/bundle/nsis -Filter "*-setup.exe" | Copy-Item -Destination dist/
+
       - name: Create release and upload assets
         uses: softprops/action-gh-release@v1
         with:
           name: Daily Flow ${{ github.ref_name }}
           draft: true
-          files: |
-            src-tauri/target/release/bundle/msi/*.msi
-            src-tauri/target/release/bundle/nsis/*.exe
+          files: dist/*
