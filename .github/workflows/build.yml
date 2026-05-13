@@ -42,19 +42,5 @@ jobs:
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
-
-      - name: Collect artifacts
-        shell: pwsh
-        run: |
-          New-Item -ItemType Directory -Path artifacts -Force
-          Get-ChildItem -Path "src-tauri\target\release\bundle\msi" -Filter "*.msi" | Copy-Item -Destination artifacts\
-          Get-ChildItem -Path "src-tauri\target\release\bundle\nsis" -Filter "*-setup.exe" | Copy-Item -Destination artifacts\
-          Write-Host "=== Artifacts ==="
-          Get-ChildItem -Path artifacts | Format-Table Name, Length
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: daily-flow-windows
-          path: artifacts/*
-          if-no-files-found: error
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
