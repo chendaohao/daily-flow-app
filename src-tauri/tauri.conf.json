@@ -46,7 +46,5 @@
       "csp": null
     }
   },
-  "plugins": {
-    "notification": {}
-  }
+  "plugins": {}
 }
