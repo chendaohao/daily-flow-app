@@ -16,3 +16,7 @@ Thumbs.db
 # Env
 .env
 .env.local
+
+# OMC
+.omc/
+.claude/
