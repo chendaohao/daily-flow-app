@@ -21,7 +21,7 @@ fn main() {
             let c_title = CString::new("Daily Flow 崩溃").unwrap();
             unsafe {
                 extern "system" {
-                    fn MessageBoxA(hwnd: *const u8, lpText: *const i8, lpCaption: *const i8, uType: u32) -> i32;
+                    fn MessageBoxA(hwnd: *const std::ffi::c_void, lpText: *const i8, lpCaption: *const i8, uType: u32) -> i32;
                 }
                 MessageBoxA(std::ptr::null(), c_msg.as_ptr(), c_title.as_ptr(), 0x10);
             }

@@ -193,7 +193,6 @@ pub fn run() {
     println!("[DEBUG] Calling builder.run()...");
     if let Err(e) = builder.run(tauri::generate_context!()) {
         eprintln!("[FATAL] Tauri run failed: {:?}", e);
-        // 弹出 Windows 消息框显示错误
         #[cfg(target_os = "windows")]
         {
             use std::ffi::CString;
@@ -201,7 +200,7 @@ pub fn run() {
             let title = CString::new("Daily Flow Error").unwrap();
             unsafe {
                 extern "system" {
-                    fn MessageBoxA(hwnd: *const u8, lpText: *const i8, lpCaption: *const u8, uType: u32) -> i32;
+                    fn MessageBoxA(hwnd: *const std::ffi::c_void, lpText: *const i8, lpCaption: *const i8, uType: u32) -> i32;
                 }
                 MessageBoxA(std::ptr::null(), msg.as_ptr(), title.as_ptr(), 0x10);
             }
