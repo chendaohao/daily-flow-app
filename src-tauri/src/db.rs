@@ -48,16 +48,38 @@ pub struct DbState {
 }
 
 pub fn init_db(app_data_dir: PathBuf) -> DbState {
+    println!("[DB] init_db called with dir: {:?}", app_data_dir);
+
     let db_path = app_data_dir.join("daily-flow.db");
-    let conn = Connection::open(&db_path).expect("Failed to open database");
+    println!("[DB] Opening database at: {:?}", db_path);
 
-    conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;")
-        .expect("Failed to set pragmas");
+    let conn = match Connection::open(&db_path) {
+        Ok(c) => {
+            println!("[DB] Database opened successfully");
+            c
+        }
+        Err(e) => {
+            eprintln!("[DB ERROR] Failed to open database: {:?}", e);
+            panic!("Failed to open database: {:?}", e);
+        }
+    };
 
+    println!("[DB] Setting pragmas...");
+    if let Err(e) = conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON;") {
+        eprintln!("[DB ERROR] Failed to set pragmas: {:?}", e);
+    }
+
+    println!("[DB] Running migrations...");
     let migration = include_str!("../migrations/001_init.sql");
-    conn.execute_batch(migration)
-        .expect("Failed to run migrations");
+    match conn.execute_batch(migration) {
+        Ok(_) => println!("[DB] Migrations completed successfully"),
+        Err(e) => {
+            eprintln!("[DB ERROR] Migration failed: {:?}", e);
+            panic!("Migration failed: {:?}", e);
+        }
+    }
 
+    println!("[DB] init_db completed OK");
     DbState {
         conn: Mutex::new(conn),
     }

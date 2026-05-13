@@ -17,11 +17,13 @@ fn db() -> &'static DbState {
 
 #[tauri::command]
 fn get_frogs(date: String) -> Vec<db::Frog> {
+    println!("[CMD] get_frogs date={}", date);
     db().get_frogs(&date)
 }
 
 #[tauri::command]
 fn create_frog(date: String, position: i32, title: String) -> db::Frog {
+    println!("[CMD] create_frog date={} pos={} title={}", date, position, title);
     db().create_frog(&date, position, &title)
 }
 
@@ -33,6 +35,7 @@ fn update_frog(
     pomodoros: Option<i32>,
     estimated_pomodoros: Option<i32>,
 ) -> db::Frog {
+    println!("[CMD] update_frog id={}", id);
     db().update_frog(
         id,
         title.as_deref(),
@@ -44,26 +47,31 @@ fn update_frog(
 
 #[tauri::command]
 fn delete_frog(id: i64) {
+    println!("[CMD] delete_frog id={}", id);
     db().delete_frog(id);
 }
 
 #[tauri::command]
 fn start_pomodoro(frog_id: i64, date: String) -> db::PomodoroRecord {
+    println!("[CMD] start_pomodoro frog_id={} date={}", frog_id, date);
     db().start_pomodoro(frog_id, &date)
 }
 
 #[tauri::command]
 fn complete_pomodoro(id: i64) {
+    println!("[CMD] complete_pomodoro id={}", id);
     db().complete_pomodoro(id);
 }
 
 #[tauri::command]
 fn get_pomodoro_stats(date: String) -> db::PomodoroStats {
+    println!("[CMD] get_pomodoro_stats date={}", date);
     db().get_pomodoro_stats(&date)
 }
 
 #[tauri::command]
 fn get_review(date: String) -> Option<db::Review> {
+    println!("[CMD] get_review date={}", date);
     db().get_review(&date)
 }
 
@@ -74,21 +82,25 @@ fn save_review(
     blockers: String,
     tomorrow_plan: String,
 ) -> db::Review {
+    println!("[CMD] save_review date={}", date);
     db().save_review(&date, &gains, &blockers, &tomorrow_plan)
 }
 
 #[tauri::command]
 fn get_setting(key: String) -> Option<String> {
+    println!("[CMD] get_setting key={}", key);
     db().get_setting(&key)
 }
 
 #[tauri::command]
 fn set_setting(key: String, value: String) {
+    println!("[CMD] set_setting key={}", key);
     db().set_setting(&key, &value);
 }
 
 #[tauri::command]
 fn send_notification(title: String, body: String) {
+    println!("[CMD] send_notification title={}", title);
     let handle = TAURI_APP_HANDLE.lock().unwrap();
     if let Some(app) = handle.as_ref() {
         notify::send_notification(app, &title, &body);
@@ -102,6 +114,7 @@ async fn claude_complete(
     api_key: String,
     model: String,
 ) -> Result<String, String> {
+    println!("[CMD] claude_complete model={}", model);
     llm::claude_complete(&prompt, &context, &api_key, &model).await
 }
 
@@ -109,35 +122,76 @@ async fn claude_complete(
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_notification::init())
-        .setup(|app| {
-            *TAURI_APP_HANDLE.lock().unwrap() = Some(app.handle().clone());
+    println!("[DEBUG] run() started");
 
-            let app_data = app
-                .path()
-                .app_data_dir()
-                .expect("Failed to get app data dir");
-            std::fs::create_dir_all(&app_data).ok();
+    println!("[DEBUG] Creating tauri::Builder...");
+    let builder = tauri::Builder::default();
 
-            let _ = DB.set(db::init_db(app_data));
-            Ok(())
-        })
-        .invoke_handler(tauri::generate_handler![
-            get_frogs,
-            create_frog,
-            update_frog,
-            delete_frog,
-            start_pomodoro,
-            complete_pomodoro,
-            get_pomodoro_stats,
-            get_review,
-            save_review,
-            get_setting,
-            set_setting,
-            send_notification,
-            claude_complete,
-        ])
+    println!("[DEBUG] Registering notification plugin...");
+    let builder = builder.plugin(tauri_plugin_notification::init());
+
+    println!("[DEBUG] Setting up app...");
+    let builder = builder.setup(|app| {
+        println!("[DEBUG] Setup closure entered");
+
+        println!("[DEBUG] Setting TAURI_APP_HANDLE...");
+        *TAURI_APP_HANDLE.lock().unwrap() = Some(app.handle().clone());
+        println!("[DEBUG] TAURI_APP_HANDLE set");
+
+        println!("[DEBUG] Getting app_data_dir...");
+        let app_data = match app.path().app_data_dir() {
+            Ok(p) => {
+                println!("[DEBUG] app_data_dir = {:?}", p);
+                p
+            }
+            Err(e) => {
+                eprintln!("[ERROR] Failed to get app_data_dir: {:?}", e);
+                return Err(e.into());
+            }
+        };
+
+        println!("[DEBUG] Creating app_data_dir...");
+        if let Err(e) = std::fs::create_dir_all(&app_data) {
+            eprintln!("[ERROR] Failed to create app_data_dir: {:?}", e);
+        }
+
+        println!("[DEBUG] Initializing database...");
+        match std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            db::init_db(app_data)
+        })) {
+            Ok(state) => {
+                println!("[DEBUG] Database initialized successfully");
+                let _ = DB.set(state);
+            }
+            Err(e) => {
+                eprintln!("[ERROR] Database init panicked: {:?}", e);
+                return Err("Database init failed".into());
+            }
+        }
+
+        println!("[DEBUG] Setup closure completed OK");
+        Ok(())
+    });
+
+    println!("[DEBUG] Registering invoke handler...");
+    let builder = builder.invoke_handler(tauri::generate_handler![
+        get_frogs,
+        create_frog,
+        update_frog,
+        delete_frog,
+        start_pomodoro,
+        complete_pomodoro,
+        get_pomodoro_stats,
+        get_review,
+        save_review,
+        get_setting,
+        set_setting,
+        send_notification,
+        claude_complete,
+    ]);
+
+    println!("[DEBUG] Calling builder.run()...");
+    builder
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
